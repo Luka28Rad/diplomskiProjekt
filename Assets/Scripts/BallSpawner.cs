@@ -28,6 +28,9 @@ public class BallSpawner : MonoBehaviour
             case BallType.Tennis:
                 prefab = tennis;
                 break;
+            case BallType.Football:
+                prefab = football;
+                break;
             case BallType.Bowling:
                 prefab = bowling;
                 break;

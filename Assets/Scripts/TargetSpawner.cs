@@ -19,11 +19,11 @@ public class TargetSpawner : MonoBehaviour
         int h = Mathf.Clamp(GameManager.Instance.targetHeight, 1, 3);
 
         Vector3 position = new Vector3(
-            0,
-            h * heightStep,
-            d * distanceStep
+            d * distanceStep + transform.position.x,
+            h * heightStep + transform.position.y,
+            0 + transform.position.z
         );
 
-        Instantiate(targetPrefab, position, Quaternion.identity);
+        Instantiate(targetPrefab, position, Quaternion.identity * targetPrefab.transform.rotation);
     }
 }
