@@ -5945,7 +5945,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BallSpawner
   tennis: {fileID: 7507607979676302576, guid: 96483ec2b4c36ba42a8bfdb1f18356fe, type: 3}
   football: {fileID: 6092139413055033388, guid: e0770e792ddaf3e41920c34cf851c40a, type: 3}
-  bowling: {fileID: 5741576801608784902, guid: 9e64270bcb974e742a9008e7c8ea8ffd, type: 3}
+  bowling: {fileID: 495759946364604107, guid: 9e64270bcb974e742a9008e7c8ea8ffd, type: 3}
   spear: {fileID: 8530569858769534125, guid: af4d440c3a7da064282674a9cd9b5df1, type: 3}
 --- !u!1 &732956838
 GameObject:
