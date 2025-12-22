@@ -6,6 +6,7 @@ public class BallSpawner : MonoBehaviour
     public GameObject football;
     public GameObject bowling;
     public GameObject spear;
+    public GameObject prefab;
 
     void Start()
     {
@@ -19,9 +20,8 @@ public class BallSpawner : MonoBehaviour
         Physics.gravity = new Vector3(0, g, 0);
     }
 
-    void SpawnBall()
+    public void SpawnBall()
     {
-        GameObject prefab = tennis;
 
         switch (GameManager.Instance.ballType)
         {
@@ -39,6 +39,13 @@ public class BallSpawner : MonoBehaviour
                 break;
         }
 
+        GameObject ball = Instantiate(prefab, transform.position, Quaternion.identity);
+        ball.GetComponent<Rigidbody>().mass =
+            Mathf.Clamp(GameManager.Instance.ballMass, 0.1f, 20f);
+    }
+    
+    public void RespawnBall()
+    {
         GameObject ball = Instantiate(prefab, transform.position, Quaternion.identity);
         ball.GetComponent<Rigidbody>().mass =
             Mathf.Clamp(GameManager.Instance.ballMass, 0.1f, 20f);
