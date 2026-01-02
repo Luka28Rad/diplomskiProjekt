@@ -32,12 +32,7 @@ public class ObjectRespawner : MonoBehaviour
     {
         if (obj != null && respawnPos != null)
         {
-            int randomMass = Random.Range(1, 7);
-            randomMass *= 5;
-            //float randomMass = 0.1f;
             GameObject createdObj = Instantiate(obj, respawnPos.position, respawnPos.rotation);
-            createdObj.GetComponent<Rigidbody>().mass = randomMass;
-            createdObj.GetComponentInChildren<TextMeshPro>().text = randomMass.ToString();
         }
         else
         {

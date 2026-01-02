@@ -1,6 +1,5 @@
 using UnityEngine;
 
-[ExecuteAlways]
 public class TargetRadiusGizmo : MonoBehaviour
 {
     [Header("Rings")]
@@ -11,55 +10,34 @@ public class TargetRadiusGizmo : MonoBehaviour
     [Header("Visuals")]
     public Color ringColor = Color.green;
 
-    [Header("Offset")]
-    public float offsetX = -0.07f; // move in -X direction
+    [Header("In-Game Hit Visuals")]
+    public GameObject hitMarkerPrefab;
+    public float hitMarkerSize = 0.05f;
+    public float markerLifespan = 5f;
 
-    [Header("Hit Visuals")]
-    public float hitGizmoSize = 0.05f;
-    public Color hitColor = Color.red;
+    [Header("Offset")]
+    public float offsetX = -0.07f;
 
     [Header("Ball Spawner")]
-    public BallSpawner ballSpawner; // assign your BallSpawner here
+    public BallSpawner ballSpawner;
 
-    // Store hits
-    private struct HitInfo
-    {
-        public Vector3 position;
-        public int score;
-    }
-    private readonly System.Collections.Generic.List<HitInfo> hits = new();
-    
     private void Awake()
     {
-        // Automatically find BallSpawner in the scene if not assigned
         if (ballSpawner == null)
         {
             ballSpawner = FindObjectOfType<BallSpawner>();
-            if (ballSpawner == null)
-                Debug.LogWarning("No BallSpawner found in the scene!");
         }
     }
 
     private void OnDrawGizmos()
     {
-        // Draw target rings
         Vector3 center = transform.position + Vector3.right * offsetX;
-        Vector3 axisY = Vector3.up;
-        Vector3 axisZ = Vector3.forward;
-
         Gizmos.color = ringColor;
         for (int ring = 0; ring < rings; ring++)
         {
             float t = (float)(rings - ring) / rings;
             float radius = outerRadius * t;
-            DrawCircle(center, axisY, axisZ, radius);
-        }
-
-        // Draw hit markers
-        Gizmos.color = hitColor;
-        foreach (var hit in hits)
-        {
-            Gizmos.DrawSphere(hit.position, hitGizmoSize);
+            DrawCircle(center, Vector3.up, Vector3.forward, radius);
         }
     }
 
@@ -67,7 +45,6 @@ public class TargetRadiusGizmo : MonoBehaviour
     {
         float angleStep = 2f * Mathf.PI / segments;
         Vector3 prevPoint = center + axisY * radius;
-
         for (int i = 1; i <= segments; i++)
         {
             float angle = i * angleStep;
@@ -82,38 +59,29 @@ public class TargetRadiusGizmo : MonoBehaviour
         if (!collision.gameObject.CompareTag("ThrowablePoints")) return;
 
         Vector3 center = transform.position + Vector3.right * offsetX;
-        Vector3 hitPos = collision.transform.position;
 
-        // Distance in YZ plane
-        Vector2 hit2D = new Vector2(hitPos.y - center.y, hitPos.z - center.z);
+        Vector3 contactPoint = collision.GetContact(0).point;
+
+        Vector2 hit2D = new Vector2(contactPoint.y - center.y, contactPoint.z - center.z);
         float distance = hit2D.magnitude;
 
-        if (distance > outerRadius)
+        if (distance <= outerRadius)
         {
-            Debug.Log("Missed target!");
-        }
-        else
-        {
-            // Calculate score based on ring
             float ringStep = outerRadius / rings;
             int score = rings - Mathf.FloorToInt(distance / ringStep);
             Debug.Log($"Hit target! Score: {score}");
-
-            // Store hit for gizmo drawing
-            hits.Add(new HitInfo { position = hitPos, score = score });
         }
 
-        // Destroy the collided object
-        Destroy(collision.gameObject);
-
-        // Spawn a new ball using the assigned BallSpawner
-        if (ballSpawner != null)
+        if (hitMarkerPrefab != null)
         {
-            ballSpawner.RespawnBall();
+            GameObject marker = Instantiate(hitMarkerPrefab, contactPoint, Quaternion.identity);
+            marker.transform.localScale = Vector3.one * hitMarkerSize;
+
+            Destroy(marker, markerLifespan);
         }
-        else
-        {
-            Debug.LogWarning("BallSpawner reference not assigned in TargetRadiusGizmo!");
-        }
+
+        collision.gameObject.transform.position = ballSpawner.transform.position;
+        collision.gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+        collision.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
     }
 }

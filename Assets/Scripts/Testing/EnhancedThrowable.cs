@@ -1,144 +1,218 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit;
+using UnityEngine.XR.Interaction.Toolkit.Filtering;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
 
-namespace UnityEngine.XR.Interaction.Toolkit.Interactables
+namespace UnityEngine.XR.Interaction.Toolkit.Samples
 {
-    public class EnhancedThrowable : XRGrabInteractable
+    public enum ThrowingStyle
     {
-        [Header("Enhanced Throwing Settings")]
-        [Tooltip("The duration (in seconds) to track the controller's velocity before release. A shorter duration captures more of the final flick of the wrist.")]
-        [Range(0.05f, 0.5f)]
-        public float throwHistoryDuration = 0.2f;
+        Spear,
+        Baseball,
+        Underhand
+    }
 
-        [Tooltip("A multiplier for the final linear velocity of the throw. Increases the overall force of the throw.")]
-        public float velocityMultiplier = 1.5f;
+    [AddComponentMenu("XR/Enhanced Throwable")]
+    public class EnhancedThrowable : XRGrabInteractable, IXRSelectFilter
+    {
+        [Header("Throwing Profile")]
+        [SerializeField] ThrowingStyle m_ThrowingStyle = ThrowingStyle.Baseball;
+        [SerializeField, Range(1f, 5f)] float m_PowerMultiplier = 1.5f;
+        [SerializeField, Range(0f, 1f)] float m_DirectionalSmoothing = 0.5f;
+        [SerializeField, Range(0f, 1f)] float m_ReleaseThreshold = 0.1f;
 
-        [Tooltip("A multiplier for the final angular velocity of the throw. Affects the spin of the object upon release.")]
-        public float angularVelocityMultiplier = 1.0f;
+        [Header("Calibration")]
+        [SerializeField] bool m_UseCalibration = true;
+        [SerializeField] int m_RequiredThrows = 5;
 
-        [Tooltip("A factor to control how much the controller's angular velocity contributes to the throw's linear velocity. Higher values are better for dart-like or overhand throws with a strong wrist flick.")]
-        [Range(0.0f, 1.0f)]
-        public float angularVelocityInfluence = 0.75f;
+        private List<CalibrationResult> m_RecordedThrows = new List<CalibrationResult>();
+        private bool m_IsCalibrating = false;
+        private float m_LastStrengthValue;
 
-        [Tooltip("An offset from the throwable object's center of mass to calculate the tangential velocity from. Can be used to fine-tune the throwing arc.")]
-        public Vector3 centerOfMassOffset = Vector3.zero;
+        [Header("Spear Settings")]
+        [SerializeField] bool m_StabilizeFlight = true;
+        [SerializeField] float m_AlignmentSpeed = 5f;
 
-        private readonly Queue<Pose> poseHistory = new Queue<Pose>();
-        private IXRSelectInteractor selectingInteractor = null;
-        private Rigidbody rb;
+        [Header("Baseball/Underhand Settings")]
+        [SerializeField] bool m_ApplyFlickBonus = true;
+        [SerializeField] float m_VerticalBoost = 1.2f;
+
+        private Rigidbody m_Rb;
+        private bool m_InFlight = false;
+
+        public bool canProcess => isActiveAndEnabled;
+
+        private struct CalibrationResult
+        {
+            public float ReleaseStrength;
+            public float RawSpeed;
+            public float AimAccuracy;
+        }
 
         protected override void Awake()
         {
             base.Awake();
-            rb = GetComponent<Rigidbody>();
+            m_Rb = GetComponent<Rigidbody>();
+            selectFilters.Add(this);
+
+            if (m_UseCalibration) StartCalibration();
         }
 
-        protected override void OnSelectEntering(SelectEnterEventArgs args)
+        public void StartCalibration()
         {
-            base.OnSelectEntering(args);
-            selectingInteractor = args.interactorObject;
-            poseHistory.Clear();
+            m_IsCalibrating = true;
+            m_RecordedThrows.Clear();
+            m_ReleaseThreshold = 0.1f;
         }
 
-        protected override void OnSelectExiting(SelectExitEventArgs args)
+        protected override void Detach()
         {
-            base.OnSelectExiting(args);
-            if (args.interactorObject == selectingInteractor)
+            base.Detach();
+
+            Vector3 baseVelocity = m_Rb.linearVelocity;
+            Vector3 baseAngularVelocity = m_Rb.angularVelocity;
+
+            if (m_IsCalibrating)
             {
-                selectingInteractor = null;
+                RecordCalibrationData(baseVelocity);
             }
+
+            Vector3 enhancedVelocity = CalculateEnhancedVelocity(baseVelocity, baseAngularVelocity);
+            m_Rb.linearVelocity = enhancedVelocity;
+
+            if (m_ThrowingStyle == ThrowingStyle.Spear)
+            {
+                m_InFlight = true;
+                m_Rb.angularVelocity = baseAngularVelocity * 0.1f;
+            }
+        }
+
+        private void RecordCalibrationData(Vector3 velocity)
+        {
+            float speed = velocity.magnitude;
+            if (speed < 0.5f) return;
+
+            CalibrationResult result = new CalibrationResult
+            {
+                ReleaseStrength = m_LastStrengthValue,
+                RawSpeed = speed,
+                AimAccuracy = Vector3.Dot(velocity.normalized, transform.forward)
+            };
+
+            m_RecordedThrows.Add(result);
+
+            if (m_RecordedThrows.Count >= m_RequiredThrows)
+            {
+                FinishCalibration();
+            }
+        }
+
+        private void FinishCalibration()
+        {
+            m_IsCalibrating = false;
+
+            float avgStrength = m_RecordedThrows.Average(t => t.ReleaseStrength);
+            float avgAccuracy = m_RecordedThrows.Average(t => t.AimAccuracy);
+            float maxSpeed = m_RecordedThrows.Max(t => t.RawSpeed);
+
+            m_ReleaseThreshold = Mathf.Clamp(avgStrength, 0.05f, 0.5f);
+
+            m_DirectionalSmoothing = Mathf.Clamp(1.0f - avgAccuracy, 0.2f, 0.8f);
+
+            if (maxSpeed < 5f) m_PowerMultiplier = 2.5f;
+            else if (maxSpeed < 10f) m_PowerMultiplier = 1.8f;
+            else m_PowerMultiplier = 1.2f;
+        }
+
+        private Vector3 CalculateEnhancedVelocity(Vector3 velocity, Vector3 angularVelocity)
+        {
+            Vector3 finalVelocity = velocity;
+
+            switch (m_ThrowingStyle)
+            {
+                case ThrowingStyle.Spear:
+                    float forwardSpeed = Vector3.Dot(velocity, transform.forward);
+                    Vector3 directionalForce = transform.forward * forwardSpeed;
+                    finalVelocity = Vector3.Lerp(velocity, directionalForce, m_DirectionalSmoothing);
+                    finalVelocity *= m_PowerMultiplier;
+                    break;
+
+                case ThrowingStyle.Baseball:
+                    Vector3 aimDirection = transform.forward;
+                    float rawSpeed = velocity.magnitude;
+                    Vector3 flattenedDirection = Vector3.Lerp(velocity.normalized, aimDirection, m_DirectionalSmoothing).normalized;
+                    float flickBonus = Mathf.Clamp(angularVelocity.magnitude * 0.15f, 0f, 10f);
+                    float finalSpeed = (rawSpeed * m_PowerMultiplier) + flickBonus;
+                    finalVelocity = flattenedDirection * finalSpeed;
+                    break;
+
+                case ThrowingStyle.Underhand:
+                    finalVelocity.y *= m_VerticalBoost;
+                    finalVelocity.x *= m_PowerMultiplier;
+                    finalVelocity.z *= m_PowerMultiplier;
+                    break;
+            }
+
+            return finalVelocity;
         }
 
         public override void ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase updatePhase)
         {
             base.ProcessInteractable(updatePhase);
 
-            if (isSelected && selectingInteractor != null && updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic)
+            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Dynamic && isSelected)
             {
-                poseHistory.Enqueue(new Pose(selectingInteractor.transform.position, selectingInteractor.transform.rotation));
-
-                while (poseHistory.Count > 0 && (Time.time - poseHistory.Peek().time) > throwHistoryDuration)
+                foreach (var interactor in interactorsSelecting)
                 {
-                    poseHistory.Dequeue();
+                    if (interactor is IXRInteractionStrengthInteractor strengthInteractor)
+                    {
+                        m_LastStrengthValue = strengthInteractor.GetInteractionStrength(this);
+                    }
+                }
+            }
+
+            if (updatePhase == XRInteractionUpdateOrder.UpdatePhase.Fixed && m_InFlight)
+            {
+                if (m_ThrowingStyle == ThrowingStyle.Spear && m_StabilizeFlight)
+                {
+                    UpdateSpearFlight();
                 }
             }
         }
 
-        protected override void Detach()
+        public bool Process(IXRSelectInteractor interactor, IXRSelectInteractable interactable)
         {
-            if (throwOnDetach && selectingInteractor != null)
+            if (interactor is IXRInteractionStrengthInteractor strengthInteractor)
             {
-                if (rb.isKinematic)
+                float currentStrength = strengthInteractor.GetInteractionStrength(interactable);
+                if (interactorsSelecting.Contains(interactor))
                 {
-                    Debug.LogWarning("Cannot throw a kinematic Rigidbody. Disable 'Throw On Detach' or 'Is Kinematic' to fix this.", this);
-                    base.Detach();
-                    return;
+                    return currentStrength > m_ReleaseThreshold;
                 }
+            }
+            return true;
+        }
 
-                var (linearVelocity, angularVelocity) = CalculateThrowVelocities();
-
-                rb.linearVelocity = linearVelocity * velocityMultiplier;
-                rb.angularVelocity = angularVelocity * angularVelocityMultiplier;
+        private void UpdateSpearFlight()
+        {
+            if (m_Rb.linearVelocity.magnitude > 1f)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(m_Rb.linearVelocity);
+                m_Rb.MoveRotation(Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * m_AlignmentSpeed));
             }
             else
             {
-                base.Detach();
+                m_InFlight = false;
             }
         }
 
-        private (Vector3, Vector3) CalculateThrowVelocities()
+        private void OnCollisionEnter(Collision collision)
         {
-            if (poseHistory.Count < 2)
-            {
-                return (Vector3.zero, Vector3.zero);
-            }
-
-            var poses = new List<Pose>(poseHistory);
-            var averageLinearVelocity = Vector3.zero;
-            var averageAngularVelocity = Vector3.zero;
-
-            for (int i = 0; i < poses.Count - 1; i++)
-            {
-                var currentPose = poses[i];
-                var nextPose = poses[i + 1];
-                var deltaTime = nextPose.time - currentPose.time;
-
-                if (deltaTime > 0)
-                {
-                    averageLinearVelocity += (nextPose.position - currentPose.position) / deltaTime;
-
-                    var deltaRotation = nextPose.rotation * Quaternion.Inverse(currentPose.rotation);
-                    deltaRotation.ToAngleAxis(out var angle, out var axis);
-                    var angularVelocity = (axis * angle * Mathf.Deg2Rad) / deltaTime;
-                    averageAngularVelocity += angularVelocity;
-                }
-            }
-
-            averageLinearVelocity /= (poses.Count - 1);
-            averageAngularVelocity /= (poses.Count - 1);
-
-            var tangentialVelocity = Vector3.Cross(averageAngularVelocity, rb.worldCenterOfMass + centerOfMassOffset - selectingInteractor.transform.position);
-
-            var finalLinearVelocity = Vector3.Lerp(averageLinearVelocity, averageLinearVelocity + tangentialVelocity, angularVelocityInfluence);
-
-            return (finalLinearVelocity, averageAngularVelocity);
-        }
-
-        private struct Pose
-        {
-            public Vector3 position;
-            public Quaternion rotation;
-            public float time;
-
-            public Pose(Vector3 position, Quaternion rotation)
-            {
-                this.position = position;
-                this.rotation = rotation;
-                this.time = Time.time;
-            }
+            m_InFlight = false;
         }
     }
 }
