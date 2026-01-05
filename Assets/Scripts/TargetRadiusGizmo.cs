@@ -70,6 +70,7 @@ public class TargetRadiusGizmo : MonoBehaviour
             float ringStep = outerRadius / rings;
             int score = rings - Mathf.FloorToInt(distance / ringStep);
             Debug.Log($"Hit target! Score: {score}");
+            ScoreManager.Instance.AddPoints(score);
         }
 
         if (hitMarkerPrefab != null)

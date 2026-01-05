@@ -16,8 +16,8 @@ public class BallSpawner : MonoBehaviour
 
     void ApplyGravity()
     {
-        float g = Mathf.Clamp(GameManager.Instance.gravityStrength, -20f, -1f);
-        Physics.gravity = new Vector3(0, g, 0);
+        Physics.gravity = new Vector3(0f, GameManager.Instance.gravityStrength, 0f);
+
     }
 
     public void SpawnBall()
