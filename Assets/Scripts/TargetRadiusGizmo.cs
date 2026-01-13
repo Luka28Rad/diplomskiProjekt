@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class TargetRadiusGizmo : MonoBehaviour
 {
@@ -21,12 +22,15 @@ public class TargetRadiusGizmo : MonoBehaviour
     [Header("Ball Spawner")]
     public BallSpawner ballSpawner;
 
+    
+
     private void Awake()
     {
         if (ballSpawner == null)
         {
             ballSpawner = FindObjectOfType<BallSpawner>();
         }
+        Debug.Log("TargetRadiusGizmo initialized");
     }
 
     private void OnDrawGizmos()
@@ -59,9 +63,7 @@ public class TargetRadiusGizmo : MonoBehaviour
         if (!collision.gameObject.CompareTag("ThrowablePoints")) return;
 
         Vector3 center = transform.position + Vector3.right * offsetX;
-
         Vector3 contactPoint = collision.GetContact(0).point;
-
         Vector2 hit2D = new Vector2(contactPoint.y - center.y, contactPoint.z - center.z);
         float distance = hit2D.magnitude;
 
@@ -70,14 +72,18 @@ public class TargetRadiusGizmo : MonoBehaviour
             float ringStep = outerRadius / rings;
             int score = rings - Mathf.FloorToInt(distance / ringStep);
             Debug.Log($"Hit target! Score: {score}");
-            ScoreManager.Instance.AddPoints(score);
+            
+            // Send score directly to GameManager
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.AddScore(score);
+            }
         }
 
         if (hitMarkerPrefab != null)
         {
             GameObject marker = Instantiate(hitMarkerPrefab, contactPoint, Quaternion.identity);
             marker.transform.localScale = Vector3.one * hitMarkerSize;
-
             Destroy(marker, markerLifespan);
         }
 
@@ -85,4 +91,10 @@ public class TargetRadiusGizmo : MonoBehaviour
         collision.gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         collision.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
     }
+
+    
+
+    
+
+    
 }
