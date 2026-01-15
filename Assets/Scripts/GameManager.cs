@@ -1,29 +1,43 @@
-using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.XR.Interaction.Toolkit.Samples;
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
 
-    [Header("Throw Setup")]
-    public int targetDistance;     
-    public int targetHeight;       
-    public float gravityStrength; 
-    public BallType ballType;
-    public float ballMass;
+    [Header("Study Info")]
+    public string userID = "Unknown";
+    public StudyScenario scenario;
+    public ThresholdVariant thresholdVariant;
 
-    // CSV Data
-    private List<int> currentTestScores = new List<int>();
-    private string csvFilePath;
-    private const string CSV_FILENAME = "TestData.csv";
+    [Header("Base Parameters")]
+    public float baseReleaseThreshold = 0.3f;
+    public float gravityStrength = -9.81f;
+
+    [Header("Target Setup")]
+    [Range(1, 3)] public int targetDistance = 2;
+    [Range(1, 3)] public int targetHeight = 2;
+
+    [Header("Mass Presets")]
+    public float tennisMass = 0.057f;
+    public float bowlingMass = 7.2f;
+    public float spearMass = 1.2f;
+
+    [Header("Runtime (auto from scenario)")]
+    public float activeBallMass;
+    public ThrowingStyle activeThrowingStyle;
+
+    [Header("Runtime Throws")]
+    public int throwsPerScenario = 5;
+    public int currentThrow = 0;
+
+    private List<int> scores = new();
 
     void Awake()
     {
-        if (Instance != null && Instance != this)
+        if (Instance != null)
         {
             Destroy(gameObject);
             return;
@@ -31,178 +45,83 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        
-        // Initialize CSV
-        InitializeCSV();
-    }
-    
-    private void InitializeCSV()
-    {
-        csvFilePath = Path.Combine(Application.dataPath, "..", CSV_FILENAME);
-        csvFilePath = Path.GetFullPath(csvFilePath);
-        
-        Debug.Log($"CSV will be saved at: {csvFilePath}");
-        
-        if (!File.Exists(csvFilePath))
-        {
-            CreateCSVWithHeaders();
-        }
-    }
-    
-    private void CreateCSVWithHeaders()
-    {
-        try
-        {
-            using (StreamWriter writer = new StreamWriter(csvFilePath, false))
-            {
-                writer.WriteLine("DateTime,TargetDistance,TargetHeight,GravityStrength,BallType,BallMass,ThrowScores");
-            }
-            Debug.Log($"CSV file created with headers");
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error creating CSV file: {e.Message}");
-        }
-    }
-    
-    public void AddScore(int score)
-    {
-        currentTestScores.Add(score);
-        Debug.Log($"Score added: {score}. Total throws: {currentTestScores.Count}");
-    }
-    
-    private void OnApplicationFocus(bool hasFocus)
-    {
-        if (!hasFocus)
-        {
-            SaveTestDataToCSV();
-        }
-    }
-    
-    private void OnApplicationPause(bool pauseStatus)
-    {
-        if (pauseStatus)
-        {
-            SaveTestDataToCSV();
-        }
-    }
-    
-    private void OnApplicationQuit()
-    {
-        Debug.Log("GameManager: Application quitting - saving CSV data");
-        SaveTestDataToCSV();
-    }
-    
-    void OnDestroy()
-    {
-        Debug.Log("GameManager: OnDestroy - saving CSV data");
-        SaveTestDataToCSV();
-    }
-    
-    private void SaveTestDataToCSV()
-    {
-        if (currentTestScores.Count == 0)
-        {
-            Debug.Log("No scores to save");
-            return;
-        }
-        
-        try
-        {
-            using (StreamWriter writer = new StreamWriter(csvFilePath, true))
-            {
-                string dateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                string throwScores = string.Join(",", currentTestScores);
-                
-                string csvLine = $"{dateTime},{targetDistance},{targetHeight},{gravityStrength},{ballType},{ballMass},{throwScores}";
-                writer.WriteLine(csvLine);
-                
-                Debug.Log($"CSV saved: {csvLine}");
-            }
-            
-            Debug.Log($"Test data saved to CSV. Throws recorded: {currentTestScores.Count}");
-            currentTestScores.Clear();
-        }
-        catch (Exception e)
-        {
-            Debug.LogError($"Error writing to CSV: {e.Message}");
-        }
-    }
-    
-    public void SetTargetDistance(int value)
-    {
-        targetDistance = value;
     }
 
-    public void SetTargetHeight(int value)
+    public void ApplyScenarioPreset()
     {
-        targetHeight = value;
-    }
-    
-    public void SetGravity(string value)
-    {
-        if (float.TryParse(value, out float g))
+        switch (scenario)
         {
-            gravityStrength = g;
+            case StudyScenario.TennisOverhand:
+                activeBallMass = tennisMass;
+                activeThrowingStyle = ThrowingStyle.Baseball;
+                break;
+
+            case StudyScenario.TennisUnderhand:
+                activeBallMass = tennisMass;
+                activeThrowingStyle = ThrowingStyle.Underhand;
+                break;
+
+            case StudyScenario.BowlingUnderhand:
+                activeBallMass = bowlingMass;
+                activeThrowingStyle = ThrowingStyle.Underhand;
+                break;
+
+            case StudyScenario.SpearOverhand:
+                activeBallMass = spearMass;
+                activeThrowingStyle = ThrowingStyle.Spear;
+                break;
         }
     }
-    
-    public void SetBallType(int index)
+
+    public float GetActiveThreshold()
     {
-        ballType = (BallType)index;
-    }
-    
-    public void SetMass(string value)
-    {
-        if (float.TryParse(value, out float m))
+        return thresholdVariant switch
         {
-            ballMass = m;
-        }
+            ThresholdVariant.Plus => baseReleaseThreshold + 0.1f,
+            ThresholdVariant.Minus => baseReleaseThreshold - 0.1f,
+            _ => baseReleaseThreshold
+        };
     }
-    
-    public void StartGame()
+
+
+    public float GetActiveMass()
     {
-        // Clear previous test scores when starting new game
-        currentTestScores.Clear();
-        Debug.Log("Starting new game - scores reset");
-        
+        return activeBallMass;
+    }
+
+    public void StartScenario()
+    {
+        scores.Clear();
+        currentThrow = 0;
         SceneManager.LoadScene("SampleScene");
     }
-    
-    // Manual save method for testing
-    [ContextMenu("Save CSV Now")]
-    public void ManualSaveCSV()
+
+    public void AddScore(int score)
     {
-        Debug.Log("Manual CSV save triggered");
-        SaveTestDataToCSV();
+        scores.Add(score);
+        currentThrow++;
+
+        if (currentThrow >= throwsPerScenario)
+        {
+            CSVDataManager.Instance.SaveCurrentTest(scores);
+            SceneManager.LoadScene("MainMenu");
+        }
     }
-    
-    [ContextMenu("TEST: Simulate Throws + Save")]
-    public void TestSimulateThrowsAndSave()
-    {
-
-        currentTestScores.Clear();
-
-        // Simulirana bacanja
-        currentTestScores.Add(10);
-        currentTestScores.Add(8);
-        currentTestScores.Add(6);
-        currentTestScores.Add(9);
-        currentTestScores.Add(7);
-
-
-        SaveTestDataToCSV();
-
-    }
-
 }
 
 
 
-public enum BallType
+public enum StudyScenario
 {
-    Tennis,
-    Football,
-    Bowling,
-    Spear
+    TennisOverhand,
+    TennisUnderhand,
+    BowlingUnderhand,
+    SpearOverhand
+}
+
+public enum ThresholdVariant
+{
+    Base,
+    Plus,
+    Minus
 }

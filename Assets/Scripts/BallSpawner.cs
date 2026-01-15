@@ -1,53 +1,48 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Samples;
 
 public class BallSpawner : MonoBehaviour
 {
     public GameObject tennis;
-    public GameObject football;
     public GameObject bowling;
     public GameObject spear;
-    public GameObject prefab;
 
     void Start()
     {
-        ApplyGravity();
-        SpawnBall();
+        Physics.gravity =
+            new Vector3(0, GameManager.Instance.gravityStrength, 0);
+
+        Spawn();
     }
 
-    void ApplyGravity()
+    void Spawn()
     {
-        Physics.gravity = new Vector3(0f, GameManager.Instance.gravityStrength, 0f);
+        GameObject prefab = null;
 
-    }
-
-    public void SpawnBall()
-    {
-
-        switch (GameManager.Instance.ballType)
+        switch (GameManager.Instance.scenario)
         {
-            case BallType.Tennis:
+            case StudyScenario.TennisOverhand:
+            case StudyScenario.TennisUnderhand:
                 prefab = tennis;
                 break;
-            case BallType.Football:
-                prefab = football;
-                break;
-            case BallType.Bowling:
+
+            case StudyScenario.BowlingUnderhand:
                 prefab = bowling;
                 break;
-            case BallType.Spear:
+
+            case StudyScenario.SpearOverhand:
                 prefab = spear;
                 break;
         }
 
-        GameObject ball = Instantiate(prefab, transform.position, Quaternion.identity);
-        ball.GetComponent<Rigidbody>().mass =
-            Mathf.Clamp(GameManager.Instance.ballMass, 0.1f, 20f);
-    }
-    
-    public void RespawnBall()
-    {
-        GameObject ball = Instantiate(prefab, transform.position, Quaternion.identity);
-        ball.GetComponent<Rigidbody>().mass =
-            Mathf.Clamp(GameManager.Instance.ballMass, 0.1f, 20f);
+        GameObject ball =
+            Instantiate(prefab, transform.position, Quaternion.identity);
+
+        Rigidbody rb = ball.GetComponent<Rigidbody>();
+        rb.mass = GameManager.Instance.activeBallMass;
+
+        var et = ball.GetComponent<EnhancedThrowable>();
+        et.SetThrowingStyle(GameManager.Instance.activeThrowingStyle);
+        et.SetReleaseThreshold(GameManager.Instance.GetActiveThreshold());
     }
 }

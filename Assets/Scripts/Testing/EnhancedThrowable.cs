@@ -214,5 +214,16 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
         {
             m_InFlight = false;
         }
+
+        public void SetThrowingStyle(ThrowingStyle style)
+        {
+            m_ThrowingStyle = style;
+        }
+
+        public void SetReleaseThreshold(float value)
+        {
+            m_ReleaseThreshold = value;
+        }
+
     }
 }
