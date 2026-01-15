@@ -48,5 +48,6 @@ public class BallSpawner : MonoBehaviour
         GameObject ball = Instantiate(prefab, transform.position, Quaternion.identity);
         ball.GetComponent<Rigidbody>().mass =
             Mathf.Clamp(GameManager.Instance.ballMass, 0.1f, 20f);
+        ball.GetComponent<EnhancedThrowable>().m_ReleaseThreshold = GameManager.Instance.threshold;
     }
 }

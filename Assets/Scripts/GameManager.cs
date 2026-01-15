@@ -10,8 +10,8 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
 
     [Header("Throw Setup")]
-    public int targetDistance = 1;     
-    public int targetHeight = 1;       
+    public int targetDistance;     
+    public int targetHeight;       
     public float gravityStrength; 
     public BallType ballType;
     public float ballMass;
@@ -39,6 +39,11 @@ public class GameManager : MonoBehaviour
         
         // Initialize CSV
         InitializeCSV();
+
+        gravityStrength = -10f; //default
+        ballMass = 5f; //default
+        threshold = 0.25f; //default
+
     }
     
     private void InitializeCSV()
@@ -149,9 +154,11 @@ public class GameManager : MonoBehaviour
                 values.Add(ballMass.ToString(CultureInfo.InvariantCulture));
 
                 // Convert scores to string and join with semicolons (or spaces/pipes)
-                string scoresString = string.Join(";", currentTestScores);
-                values.Add($"\"{scoresString}\""); // Wrap in quotes to handle potential commas
-                
+                foreach(var value in currentTestScores)
+                {
+                    values.Add(value.ToString());
+                }
+
                 string csvLine = string.Join(",", values);
                 writer.WriteLine(csvLine);
                 
@@ -198,19 +205,18 @@ public class GameManager : MonoBehaviour
 
     public void SetThreshold(int index)
     {
-        threshold = 0.5f; //default
 
         if (index == 0)
         {
-            threshold = 0.5f; //suvisno, ali nvz
+            threshold = 0.25f; //suvisno, ali nvz
         }
         else if (index == 1)
         {
-            threshold += 0.1f;
+            threshold = 0.3f;
         }
         else if (index == 2)
         {
-            threshold -= 0.1f;
+            threshold = 0.2f;
         }
     }
 

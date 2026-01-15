@@ -65,6 +65,8 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
             m_Rb = GetComponent<Rigidbody>();
             selectFilters.Add(this);
 
+            m_UseCalibration = false; // Force disable calibration for now
+
             if (m_UseCalibration) StartCalibration();
         }
 
