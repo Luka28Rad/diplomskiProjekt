@@ -22,7 +22,8 @@ public class TargetRadiusGizmo : MonoBehaviour
     [Header("Ball Spawner")]
     public BallSpawner ballSpawner;
 
-    
+    [Header("Target Spawner")]
+    public TargetSpawner targetSpawner;
 
     private void Awake()
     {
@@ -30,6 +31,12 @@ public class TargetRadiusGizmo : MonoBehaviour
         {
             ballSpawner = FindObjectOfType<BallSpawner>();
         }
+        
+        if (targetSpawner == null)
+        {
+            targetSpawner = FindObjectOfType<TargetSpawner>();
+        }
+        
         Debug.Log("TargetRadiusGizmo initialized");
     }
 
@@ -87,14 +94,16 @@ public class TargetRadiusGizmo : MonoBehaviour
             Destroy(marker, markerLifespan);
         }
 
+        // Reset ball position and velocity
         collision.gameObject.transform.position = ballSpawner.transform.position;
         collision.gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         collision.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+
+        // Respawn target at new random position
+        if (targetSpawner != null)
+        {
+            targetSpawner.RespawnTargetRandomly();
+            Debug.Log("Target respawned at new random position");
+        }
     }
-
-    
-
-    
-
-    
 }
