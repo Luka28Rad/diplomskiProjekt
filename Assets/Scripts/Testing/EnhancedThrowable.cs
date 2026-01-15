@@ -65,7 +65,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
             m_Rb = GetComponent<Rigidbody>();
             selectFilters.Add(this);
 
-            m_UseCalibration = false; // Force disable calibration for now
+            m_UseCalibration = true; // kalibriraj, ali bez threshold varijable
 
             if (m_UseCalibration) StartCalibration();
         }
@@ -74,7 +74,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
         {
             m_IsCalibrating = true;
             m_RecordedThrows.Clear();
-            m_ReleaseThreshold = 0.1f;
+            //m_ReleaseThreshold = 0.1f;
         }
 
         protected override void Detach()
@@ -137,7 +137,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
             float avgAccuracy = m_RecordedThrows.Average(t => t.AimAccuracy);
             float avgSpeed = m_RecordedThrows.Average(t => t.RawSpeed);
 
-            m_ReleaseThreshold = Mathf.Clamp(avgStrength * 0.5f, 0.05f, 0.8f);
+            //m_ReleaseThreshold = Mathf.Clamp(avgStrength * 0.5f, 0.05f, 0.8f); - zakomentiramo jer nam treba jedna vrijednost ovoga
             m_DirectionalSmoothing = Mathf.Clamp(1.0f - avgAccuracy, 0.1f, 0.6f);
 
             float neededMultiplier = m_TargetIdealSpeed / Mathf.Max(avgSpeed, 1f);

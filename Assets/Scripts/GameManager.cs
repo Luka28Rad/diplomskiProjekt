@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
 
     [Header("Throw Setup")]
-    public int targetDistance;     
+    public int targetDistance;
     public int targetHeight;       
     public float gravityStrength; 
     public BallType ballType;
@@ -244,6 +244,6 @@ public class GameManager : MonoBehaviour
 public enum BallType
 {
     Tennis,
-    Spear,
     Bowling,
+    Spear
 }

@@ -87,7 +87,7 @@ public class TargetRadiusGizmo : MonoBehaviour
             Debug.Log($"Missed target! Score: {score}");
         }
         
-        if (GameManager.Instance != null && GameManager.Instance.ballType == BallType.Bowling)
+        if (GameManager.Instance != null && GameManager.Instance.ballType != BallType.Bowling)
         {
             GameManager.Instance.AddScore(score);
         }

@@ -5,8 +5,8 @@ public class TargetSpawner : MonoBehaviour
     public GameObject targetPrefab;
 
     [Header("Tuning")]
-    public float distanceStep = 2.5f;
-    public float heightStep = 1.5f;
+    public float distanceStep = 0.5f;
+    public float heightStep = 0.5f;
     
     [Header("Random Range")]
     public int minDistance = 1;
@@ -20,6 +20,7 @@ public class TargetSpawner : MonoBehaviour
     void Start()
     {
         SpawnTarget();
+
     }
 
     void SpawnTarget()
