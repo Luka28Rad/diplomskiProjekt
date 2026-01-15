@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit.Samples;
 
 public class BallSpawner : MonoBehaviour
 {
@@ -28,9 +29,6 @@ public class BallSpawner : MonoBehaviour
             case BallType.Tennis:
                 prefab = tennis;
                 break;
-            case BallType.Football:
-                prefab = football;
-                break;
             case BallType.Bowling:
                 prefab = bowling;
                 break;
@@ -42,6 +40,7 @@ public class BallSpawner : MonoBehaviour
         GameObject ball = Instantiate(prefab, transform.position, Quaternion.identity);
         ball.GetComponent<Rigidbody>().mass =
             Mathf.Clamp(GameManager.Instance.ballMass, 0.1f, 20f);
+        ball.GetComponent<EnhancedThrowable>().m_ReleaseThreshold = GameManager.Instance.threshold;
     }
     
     public void RespawnBall()
