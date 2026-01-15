@@ -82,12 +82,7 @@ public class CSVDataManager : MonoBehaviour
             return;
         }
         
-        if (scores.Count == 0)
-        {
-            Debug.Log("No scores to save - skipping");
-            return;
-        }
-            
+        // Removed the check that skipped empty tests - now always saves
         try
         {
             using (StreamWriter writer = new StreamWriter(csvFilePath, true))

@@ -74,17 +74,22 @@ public class TargetRadiusGizmo : MonoBehaviour
         Vector2 hit2D = new Vector2(contactPoint.y - center.y, contactPoint.z - center.z);
         float distance = hit2D.magnitude;
 
+        int score = 0;
+        
         if (distance <= outerRadius)
         {
             float ringStep = outerRadius / rings;
-            int score = rings - Mathf.FloorToInt(distance / ringStep);
+            score = rings - Mathf.FloorToInt(distance / ringStep);
             Debug.Log($"Hit target! Score: {score}");
-            
-            // Send score directly to GameManager
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.AddScore(score);
-            }
+        }
+        else
+        {
+            Debug.Log($"Missed target! Score: {score}");
+        }
+        
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddScore(score);
         }
 
         if (hitMarkerPrefab != null)
@@ -94,12 +99,10 @@ public class TargetRadiusGizmo : MonoBehaviour
             Destroy(marker, markerLifespan);
         }
 
-        // Reset ball position and velocity
         collision.gameObject.transform.position = ballSpawner.transform.position;
         collision.gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         collision.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
 
-        // Respawn target at new random position
         if (targetSpawner != null)
         {
             targetSpawner.RespawnTargetRandomly();
