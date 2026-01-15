@@ -59,11 +59,23 @@ public class TargetSpawner : MonoBehaviour
     
     public void RespawnTargetRandomly()
     {
+        // Save current session data to CSV before respawning
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SaveOnTargetReset();
+        }
+        
         SpawnTarget();
     }
     
     public void ResetToFirstSpawn()
     {
+        // Save current session data to CSV before reset
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SaveOnTargetReset();
+        }
+        
         isFirstSpawn = true;
         SpawnTarget();
     }

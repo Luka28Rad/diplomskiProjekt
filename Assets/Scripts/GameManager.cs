@@ -106,11 +106,31 @@ public class GameManager : MonoBehaviour
         SaveTestDataToCSV();
     }
     
+    // Method to trigger CSV save on target reset
+    public void SaveOnTargetReset()
+    {
+        if (currentTestScores.Count > 0)
+        {
+            Debug.Log("Target reset triggered - saving current session to CSV");
+            SaveTestDataToCSV();
+        }
+        else
+        {
+            Debug.Log("Target reset triggered - no scores to save");
+        }
+    }
+    
     private void SaveTestDataToCSV()
     {
         Debug.Log($"SaveTestDataToCSV called with {currentTestScores.Count} scores");
         
-        // Always save, even if no scores (empty test session)
+        // Only save if there are scores to save
+        if (currentTestScores.Count == 0)
+        {
+            Debug.Log("No scores to save - skipping CSV write");
+            return;
+        }
+        
         try
         {
             using (StreamWriter writer = new StreamWriter(csvFilePath, true))
@@ -140,7 +160,7 @@ public class GameManager : MonoBehaviour
             
             Debug.Log($"Test data saved to CSV. Throws recorded: {currentTestScores.Count}");
             Debug.Log($"CSV file location: {csvFilePath}");
-            currentTestScores.Clear();
+            currentTestScores.Clear(); // Clear scores after saving
         }
         catch (Exception e)
         {

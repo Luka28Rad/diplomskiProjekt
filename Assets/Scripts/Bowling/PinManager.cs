@@ -32,19 +32,24 @@ public class PinManager : MonoBehaviour
 
         Debug.Log("Reset game bowling");
         
+        // Get the score BEFORE resetting pins
         int score = GetFallenPins();
-
+        
+        // Save the bowling score to the current session
         if (GameManager.Instance != null)
         {
             GameManager.Instance.AddScore(score);
-            Debug.Log($"Bowling score saved: {score} pins knocked down");
-        }
-        else
-        {
-            Debug.LogWarning("GameManager.Instance is null - cannot save bowling score");
+            Debug.Log($"Bowling score added to session: {score} pins knocked down");
         }
         
         ResetAllPins();
+        
+        // Save current session data to CSV after each bowling throw
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.SaveOnTargetReset();
+            Debug.Log("Bowling session saved to CSV");
+        }
         
         if (ScoreManager.Instance != null)
         {
