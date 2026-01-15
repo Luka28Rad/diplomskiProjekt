@@ -21,6 +21,9 @@ public class BowlingPin : MonoBehaviour
         if (!isFallen && Vector3.Angle(transform.up, Vector3.up) > fallThreshold)
         {
             isFallen = true;
+            ScoreManager.Instance.AddPoints(1);
+            PinManager.Instance.OnPinFallen();
+            Debug.Log("Pin has fallen");
         }
     }
 

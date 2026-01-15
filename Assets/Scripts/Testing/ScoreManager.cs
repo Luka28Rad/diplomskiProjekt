@@ -32,12 +32,18 @@ public class ScoreManager : MonoBehaviour
         score += pointsToAdd;
         UpdateScoreText();
     }
+    
+    public void ResetScore()
+    {
+        score = 0;
+        UpdateScoreText();
+    }
 
     private void UpdateScoreText()
     {
         if (scoreText != null)
         {
-            scoreText.text = "Score:\n" + score;
+            scoreText.text = "Score:\n" + score + "/10";
         }
     }
 }
