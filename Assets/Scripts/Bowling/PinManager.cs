@@ -6,7 +6,7 @@ public class PinManager : MonoBehaviour
 {
     public static PinManager Instance;
     public List<BowlingPin> pins = new List<BowlingPin>();
-    public float resetDelay = 8.0f;
+    public float resetDelay = 4.0f;
     private bool isResetRoutineRunning = false;
     
     private void Awake()
@@ -31,13 +31,29 @@ public class PinManager : MonoBehaviour
         yield return new WaitForSeconds(resetDelay);
 
         Debug.Log("Reset game bowling");
+        
+        int score = GetFallenPins();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddScore(score);
+            Debug.Log($"Bowling score saved: {score} pins knocked down");
+        }
+        else
+        {
+            Debug.LogWarning("GameManager.Instance is null - cannot save bowling score");
+        }
+        
         ResetAllPins();
-        ScoreManager.Instance.ResetScore();
+        
+        if (ScoreManager.Instance != null)
+        {
+            ScoreManager.Instance.ResetScore();
+        }
 
         isResetRoutineRunning = false;
     }
 
-    
     public int GetFallenPins()
     {
         int count = 0;

@@ -65,7 +65,7 @@ public class GameManager : MonoBehaviour
         {
             using (StreamWriter writer = new StreamWriter(csvFilePath, false))
             {
-                // Create headers with userID as first column, then setup columns + throw score columns (up to 20 throws)
+                // Create headers with userID as first column, then setup columns + scores as one field
                 List<string> headers = new List<string>
                 {
                     "UserID",
@@ -74,14 +74,9 @@ public class GameManager : MonoBehaviour
                     "TargetHeight",
                     "GravityStrength",
                     "BallType",
-                    "BallMass"
+                    "BallMass",
+                    "Scores"
                 };
-                
-                // Add throw score columns
-                for (int i = 1; i <= 20; i++)
-                {
-                    headers.Add($"Throw{i}");
-                }
                 
                 writer.WriteLine(string.Join(",", headers));
             }
@@ -132,19 +127,10 @@ public class GameManager : MonoBehaviour
                 values.Add(gravityStrength.ToString(CultureInfo.InvariantCulture));
                 values.Add(ballType.ToString());
                 values.Add(ballMass.ToString(CultureInfo.InvariantCulture));
-                
-                // Add throw scores (each in its own column)
-                for (int i = 0; i < 20; i++) // Support up to 20 throws
-                {
-                    if (i < currentTestScores.Count)
-                    {
-                        values.Add(currentTestScores[i].ToString());
-                    }
-                    else
-                    {
-                        values.Add(""); // Empty cell for unused throw columns
-                    }
-                }
+
+                // Convert scores to string and join with semicolons (or spaces/pipes)
+                string scoresString = string.Join(";", currentTestScores);
+                values.Add($"\"{scoresString}\""); // Wrap in quotes to handle potential commas
                 
                 string csvLine = string.Join(",", values);
                 writer.WriteLine(csvLine);
