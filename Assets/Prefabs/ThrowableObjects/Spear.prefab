@@ -24,13 +24,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4054649984470996673}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.9890159, z: -0.14780942, w: 0}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0.00000010430813, y: 0.9998477, z: -0.017452642, w: 0.000000029802322}
+  m_LocalPosition: {x: -0, y: 0.006, z: 0.162}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 9018876868856440343}
-  m_LocalEulerAnglesHint: {x: 17, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 2, y: 180, z: 0}
 --- !u!1001 &8837124352715620860
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -290,7 +290,12 @@ MonoBehaviour:
   m_MaxAngularVelocityDelta: 20
   m_ThrowingStyle: 0
   m_PowerMultiplier: 1.5
+  m_TrajectoryFlatness: 0.2
   m_DirectionalSmoothing: 0.5
+  m_ReleaseThreshold: 0.25
+  m_UseCalibration: 0
+  m_RequiredThrows: 5
+  m_TargetIdealSpeed: 12
   m_StabilizeFlight: 1
   m_AlignmentSpeed: 5
   m_ApplyFlickBonus: 1
