@@ -45,9 +45,10 @@ public class CSVDataManager : MonoBehaviour
         {
             using (StreamWriter writer = new StreamWriter(csvFilePath, false))
             {
-                // Create headers with setup columns + throw score columns (up to 20 throws)
+                // Create headers with userID as first column, then setup columns + throw score columns (up to 20 throws)
                 List<string> headers = new List<string>
                 {
+                    "UserID",
                     "DateTime",
                     "TargetDistance", 
                     "TargetHeight",
@@ -81,13 +82,14 @@ public class CSVDataManager : MonoBehaviour
             Debug.LogError("GameManager.Instance is null!");
             return;
         }
-        
-        // Removed the check that skipped empty tests - now always saves
+            
         try
         {
             using (StreamWriter writer = new StreamWriter(csvFilePath, true))
             {
                 List<string> values = new List<string>();
+                
+                values.Add(GameManager.Instance.userID.ToString());
                 
                 // Add setup data
                 values.Add(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
