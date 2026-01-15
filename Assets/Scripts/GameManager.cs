@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
 
     private string csvFilePath;
     private const string CSV_FILENAME = "TestData.csv";
-    private int userID;
+    public int userID;
 
     void Awake()
     {
