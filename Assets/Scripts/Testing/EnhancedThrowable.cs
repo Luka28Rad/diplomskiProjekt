@@ -22,18 +22,18 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
         [Header("Throwing Profile")]
         [SerializeField] ThrowingStyle m_ThrowingStyle = ThrowingStyle.Baseball;
         [SerializeField, Range(1f, 3f)] float m_PowerMultiplier = 1.2f;
-        
+
         [Tooltip("Koliko ignorirati gravitaciju? 0 = parabola, 1 = laser dosl")]
-        [SerializeField, Range(0f, 1f)] float m_TrajectoryFlatness = 0.2f; 
+        [SerializeField, Range(0f, 1f)] float m_TrajectoryFlatness = 0.2f;
 
         [SerializeField, Range(0f, 1f)] float m_DirectionalSmoothing = 0.5f;
-        [SerializeField, Range(0f, 1f)] float m_ReleaseThreshold = 0.25f;
+        [SerializeField, Range(0f, 1f)] public float m_ReleaseThreshold = 0.25f;
 
         [Header("Calibration Settings")]
-        [SerializeField] bool m_UseCalibration = true;
+        [SerializeField] bool m_UseCalibration = false; //isključeno
         [SerializeField] int m_RequiredThrows = 5;
         [Tooltip("m/s koji zelite dobiti")]
-        [SerializeField] float m_TargetIdealSpeed = 12f; 
+        [SerializeField] float m_TargetIdealSpeed = 12f;
 
         private List<CalibrationResult> m_RecordedThrows = new List<CalibrationResult>();
         private bool m_IsCalibrating = false;
@@ -98,15 +98,15 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
             {
                 m_Rb.angularVelocity = baseAngularVelocity * 0.1f;
             }
-            
-            Debug.Log($"[EnhancedThrowable] BAČENO: Flatness {m_TrajectoryFlatness*100}% | Speed {enhancedVelocity.magnitude:F2}");
+
+            Debug.Log($"[EnhancedThrowable] BAČENO: Flatness {m_TrajectoryFlatness * 100}% | Speed {enhancedVelocity.magnitude:F2}");
         }
 
         private void RecordCalibrationData(Vector3 velocity)
         {
             float speed = velocity.magnitude;
-            
-            if (speed < 1.0f) 
+
+            if (speed < 1.0f)
             {
                 Debug.LogWarning("[EnhancedThrowable] Ispalo");
                 return;
@@ -152,7 +152,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
             {
                 case ThrowingStyle.Spear:
                     float forwardSpeed = Vector3.Dot(velocity, transform.forward);
-                    if(forwardSpeed > 0)
+                    if (forwardSpeed > 0)
                     {
                         Vector3 directionalForce = transform.forward * forwardSpeed;
                         finalVelocity = Vector3.Lerp(velocity, directionalForce, m_DirectionalSmoothing);
@@ -163,15 +163,15 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
                 case ThrowingStyle.Baseball:
                     Vector3 aimDirection = transform.forward;
                     float rawSpeed = velocity.magnitude;
-                    
-                    if(Vector3.Dot(velocity.normalized, aimDirection) > 0)
+
+                    if (Vector3.Dot(velocity.normalized, aimDirection) > 0)
                     {
                         Vector3 flattenedDirection = Vector3.Lerp(velocity.normalized, aimDirection, m_DirectionalSmoothing).normalized;
                         finalVelocity = flattenedDirection * rawSpeed;
                     }
-                    
+
                     float flickBonus = m_ApplyFlickBonus ? Mathf.Clamp(angularVelocity.magnitude * 0.1f, 0f, 3f) : 0f;
-                    
+
                     if (m_TrajectoryFlatness > 0.4f && finalVelocity.y < 0)
                     {
                         finalVelocity.y *= 0.5f;
@@ -222,11 +222,11 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
                     m_Rb.MoveRotation(Quaternion.Slerp(transform.rotation, targetRotation, Time.fixedDeltaTime * m_AlignmentSpeed));
                 }
             }
-            
+
             if (m_TrajectoryFlatness > 0.05f && m_Rb.linearVelocity.magnitude > 2.0f)
             {
                 Vector3 counterGravity = -Physics.gravity * m_TrajectoryFlatness;
-                
+
                 if (m_ThrowingStyle == ThrowingStyle.Underhand) counterGravity *= 0.2f;
 
                 m_Rb.AddForce(counterGravity, ForceMode.Acceleration);
@@ -256,4 +256,5 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples
             Debug.Log($"[EnhancedThrowable] Brzina udara: {collision.relativeVelocity.magnitude:F2}");
         }
     }
-}
+
+    }
