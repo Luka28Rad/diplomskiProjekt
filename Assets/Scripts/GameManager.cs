@@ -24,7 +24,7 @@ public class GameManager : MonoBehaviour
     private List<int> currentTestScores = new List<int>();
     private string csvFilePath;
     private const string CSV_FILENAME = "TestData.csv";
-    public int userID;
+    //public int userID;
 
     void Awake()
     {
