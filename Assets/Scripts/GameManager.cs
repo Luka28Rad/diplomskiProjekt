@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
                     "GravityStrength",
                     "BallType",
                     "BallMass",
-                    "Scores"
+                    "Score"
                 };
                 
                 writer.WriteLine(string.Join(",", headers));
@@ -99,17 +99,17 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Score added: {score}. Total throws: {currentTestScores.Count}");
     }
     
-    private void OnApplicationQuit()
-    {
-        Debug.Log("GameManager: Application quitting - saving CSV data");
-        SaveTestDataToCSV();
-    }
+    //private void OnApplicationQuit()
+    //{
+    //    Debug.Log("GameManager: Application quitting - saving CSV data");
+    //    SaveTestDataToCSV();
+    //}
     
-    void OnDestroy()
-    {
-        Debug.Log("GameManager: OnDestroy - saving CSV data");
-        SaveTestDataToCSV();
-    }
+    //void OnDestroy()
+    //{
+    //    Debug.Log("GameManager: OnDestroy - saving CSV data");
+    //    SaveTestDataToCSV();
+    //}
     
     // Method to trigger CSV save on target reset
     public void SaveOnTargetReset()
@@ -124,57 +124,52 @@ public class GameManager : MonoBehaviour
             Debug.Log("Target reset triggered - no scores to save");
         }
     }
-    
+
     private void SaveTestDataToCSV()
     {
         Debug.Log($"SaveTestDataToCSV called with {currentTestScores.Count} scores");
-        
-        // Only save if there are scores to save
+
         if (currentTestScores.Count == 0)
         {
             Debug.Log("No scores to save - skipping CSV write");
             return;
         }
-        
+
         try
         {
             using (StreamWriter writer = new StreamWriter(csvFilePath, true))
             {
-                List<string> values = new List<string>();
-                
-                // Add userID as first column
-                values.Add(userID.ToString());
-                
-                // Add setup data
-                values.Add(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture));
-                values.Add(targetDistance.ToString());
-                values.Add(targetHeight.ToString());
-                values.Add(gravityStrength.ToString(CultureInfo.InvariantCulture));
-                values.Add(ballType.ToString());
-                values.Add(ballMass.ToString(CultureInfo.InvariantCulture));
-
-                // Convert scores to string and join with semicolons (or spaces/pipes)
-                foreach(var value in currentTestScores)
+                foreach (int score in currentTestScores)
                 {
-                    values.Add(value.ToString());
-                }
+                    List<string> values = new List<string>
+                {
+                    userID.ToString(),
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture),
+                    targetDistance.ToString(),
+                    targetHeight.ToString(),
+                    gravityStrength.ToString(CultureInfo.InvariantCulture),
+                    ballType.ToString(),
+                    ballMass.ToString(CultureInfo.InvariantCulture),
+                    score.ToString()
+                };
 
-                string csvLine = string.Join(",", values);
-                writer.WriteLine(csvLine);
-                
-                Debug.Log($"CSV line written: {csvLine}");
+                    string csvLine = string.Join(",", values);
+                    writer.WriteLine(csvLine);
+
+                    Debug.Log($"CSV line written: {csvLine}");
+                }
             }
-            
-            Debug.Log($"Test data saved to CSV. Throws recorded: {currentTestScores.Count}");
-            Debug.Log($"CSV file location: {csvFilePath}");
-            currentTestScores.Clear(); // Clear scores after saving
+
+            Debug.Log($"Test data saved to CSV. Rows written: {currentTestScores.Count}");
+            currentTestScores.Clear();
         }
         catch (Exception e)
         {
             Debug.LogError($"Error writing to CSV file: {e.Message}");
         }
     }
-    
+
+
     public string GetCSVFilePath()
     {
         return csvFilePath;
@@ -243,28 +238,7 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene("SampleScene");
     }
     
-    // Manual save method for testing
-    [ContextMenu("Force Save CSV Test")]
-    public void ForceSaveCSVTest()
-    {
-        Debug.Log("Force saving CSV with current data...");
-        SaveTestDataToCSV();
-    }
     
-    [ContextMenu("TEST: Simulate Throws + Save")]
-    public void TestSimulateThrowsAndSave()
-    {
-        currentTestScores.Clear();
-
-        // Simulated throws including zeros
-        currentTestScores.Add(10);
-        currentTestScores.Add(0);  // Miss
-        currentTestScores.Add(6);
-        currentTestScores.Add(0);  // Miss
-        currentTestScores.Add(7);
-
-        SaveTestDataToCSV();
-    }
 }
 
 public enum BallType
