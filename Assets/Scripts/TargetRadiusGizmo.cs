@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 public class TargetRadiusGizmo : MonoBehaviour
 {
@@ -24,9 +25,14 @@ public class TargetRadiusGizmo : MonoBehaviour
 
     [Header("Target Spawner")]
     public TargetSpawner targetSpawner;
+    
+    private int numberOfHits;
+    private int maxNumberOfTries;
 
     private void Awake()
     {
+        numberOfHits = 0;
+        maxNumberOfTries = 10;
         if (ballSpawner == null)
         {
             ballSpawner = FindObjectOfType<BallSpawner>();
@@ -81,6 +87,7 @@ public class TargetRadiusGizmo : MonoBehaviour
             float ringStep = outerRadius / rings;
             score = rings - Mathf.FloorToInt(distance / ringStep);
             Debug.Log($"Hit target! Score: {score}");
+            numberOfHits++;
         }
         else
         {
@@ -94,19 +101,36 @@ public class TargetRadiusGizmo : MonoBehaviour
 
         if (hitMarkerPrefab != null)
         {
-            GameObject marker = Instantiate(hitMarkerPrefab, contactPoint, Quaternion.identity);
-            marker.transform.localScale = Vector3.one * hitMarkerSize;
+            GameObject marker;
+            if (score > 0) //ako je pogođena meta, poveži marker s targetom
+            {
+                marker = Instantiate(hitMarkerPrefab, contactPoint, Quaternion.identity, gameObject.transform);
+
+            }
+            else //u protivnom ostavi marker gdje je bio -- imati na umu da možda ako udari rub mete,
+                 //neće se micati s metom već će ostati u zraku jer je score i dalje 0
+            {
+                marker = Instantiate(hitMarkerPrefab, contactPoint, Quaternion.identity);
+            }
+            marker.transform.localScale = new Vector3(0.005f, 0.005f, 0.005f);
             Destroy(marker, markerLifespan);
         }
 
         collision.gameObject.transform.position = ballSpawner.transform.position;
         collision.gameObject.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
         collision.gameObject.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
-
-        if (targetSpawner != null)
+        if (GameManager.Instance.ballType != BallType.Bowling)
         {
-            targetSpawner.RespawnTargetRandomly();
-            Debug.Log("Target respawned at new random position");
+            if (targetSpawner != null && numberOfHits <= maxNumberOfTries)
+            {
+                targetSpawner.RespawnTargetRandomly();
+                Debug.Log("Target respawned at new random position");
+            }
+            else
+            {
+                numberOfHits = 0;
+                SceneManager.LoadScene("MainMenu");
+            }
         }
     }
 }

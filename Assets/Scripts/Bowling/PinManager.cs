@@ -1,20 +1,31 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 public class PinManager : MonoBehaviour
 {
     public static PinManager Instance;
     public List<BowlingPin> pins = new List<BowlingPin>();
-    public float resetDelay = 4.0f;
+    private float resetDelay = 4.0f;
     private bool isResetRoutineRunning = false;
+    
+    private int numberOfHits;
+    private int maxNumberOfTries;
     
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
-    
+
+    private void Start()
+    {
+        numberOfHits = 0;
+        maxNumberOfTries = 10;
+    }
+
     public void OnPinFallen()
     {
         if (!isResetRoutineRunning)
@@ -56,7 +67,14 @@ public class PinManager : MonoBehaviour
             ScoreManager.Instance.ResetScore();
         }
 
+        numberOfHits++;
         isResetRoutineRunning = false;
+
+        if (numberOfHits == maxNumberOfTries)
+        {
+            numberOfHits = 0;
+            SceneManager.LoadScene("MainMenu");
+        }
     }
 
     public int GetFallenPins()

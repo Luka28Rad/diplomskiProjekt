@@ -5,58 +5,91 @@ public class TargetSpawner : MonoBehaviour
     public GameObject targetPrefab;
 
     [Header("Tuning")]
-    public float distanceStep = 0.5f;
-    public float heightStep = 0.5f;
+    private float distanceStep = 2.5f;
+    private float heightStep = 1f;
     
     [Header("Random Range")]
-    public int minDistance = 1;
-    public int maxDistance = 3;
-    public int minHeight = 1;
-    public int maxHeight = 3;
+    private int minDistance = 5;
+    private int maxDistance = 10;
+    private int minHeight = 1;
+    private int maxHeight = 3;
 
     private bool isFirstSpawn = true;
     private GameObject currentTarget;
 
+    [SerializeField]
+    private GameObject bowlingManager;
+
+
     void Start()
     {
-        SpawnTarget();
+        if (GameManager.Instance.ballType == BallType.Bowling)
+        {
+            enableBowling();
+        }
+        else
+        {
+            SpawnTarget();
+        }
 
     }
 
-    void SpawnTarget()
+    private void enableBowling()
     {
-        if (currentTarget != null)
-        {
-            Destroy(currentTarget);
-        }
+        bowlingManager.SetActive(true);
+    }
+    private void disableBowling()
+    {
+        bowlingManager.SetActive(false);
+    }
+    
+    
 
+    void SpawnTarget() //sada vise ne unistavamo metu kad se pogodi nego samo promjeni polozaj
+                       //to nam omogucuje da kad se pogodi i stavi marker, on se promjenio zajedno s metom
+    {
         int d, h;
 
         if (isFirstSpawn)
         {
-            d = 1;
-            h = 1;
+            d = minDistance;
+            h = minHeight;
             isFirstSpawn = false;
         }
         else
         {
             d = Random.Range(minDistance, maxDistance + 1);
             h = Random.Range(minHeight, maxHeight + 1);
-            
+
             GameManager.Instance.SetTargetDistance(d);
             GameManager.Instance.SetTargetHeight(h);
+            
         }
 
         Vector3 position = new Vector3(
-            d * distanceStep + transform.position.x,
-            h * heightStep + transform.position.y,
-            0 + transform.position.z
+            d + 0,
+            h + 0,
+            transform.position.z
         );
 
-        currentTarget = Instantiate(targetPrefab, position, Quaternion.identity * targetPrefab.transform.rotation);
-        
-        Debug.Log($"Target spawned at distance: {d}, height: {h}");
+        if (currentTarget == null)
+        {
+            // First time: create it
+            currentTarget = Instantiate(
+                targetPrefab,
+                position,
+                targetPrefab.transform.rotation
+            );
+        }
+        else
+        {
+            // Target exists: just move it
+            currentTarget.transform.position = position;
+        }
+
+        Debug.Log($"Target positioned at distance: {d}, height: {h}");
     }
+
     
     public void RespawnTargetRandomly()
     {
