@@ -80,7 +80,8 @@ public class GameManager : MonoBehaviour
                     "GravityStrength",
                     "BallType",
                     "BallMass",
-                    "Score"
+                    "Score",
+                    "ThresholdValue"
                 };
                 
                 writer.WriteLine(string.Join(",", headers));
@@ -150,7 +151,8 @@ public class GameManager : MonoBehaviour
                     gravityStrength.ToString(CultureInfo.InvariantCulture),
                     ballType.ToString(),
                     ballMass.ToString(CultureInfo.InvariantCulture),
-                    score.ToString()
+                    score.ToString(),
+                    threshold.ToString(CultureInfo.InvariantCulture)
                 };
 
                     string csvLine = string.Join(",", values);
